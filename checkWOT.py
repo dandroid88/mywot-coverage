@@ -1,8 +1,7 @@
 #!/usr/bin/env python
-import sys, urllib2, re, os
+import sys, urllib2, re, os, sqlite3
 from xml.dom.minidom import parseString
 from bs4 import BeautifulSoup
-
 
 def savePage(url, body):
     f = open(os.getcwd() + '/Site Samples/' + url.replace('http://', '').replace('/', '_') + '.txt', 'w')
@@ -28,6 +27,8 @@ def getComments(url, body):
 def getThirdPartyInfo(url):
     print "getThirdPartyInfo Not Done"
 
+def getStatistics(url):
+    print "getStatistics Not Done"
 
 
 if (len(sys.argv) > 1):
