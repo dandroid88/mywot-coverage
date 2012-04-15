@@ -1,1 +1,11 @@
-http://www.mywot.com/wiki/API
+getRenderedSite.py is a great hack from http://blog.motane.lu/2009/06/18/pywebkitgtk-execute-javascript-from-python/
+
+Instructions for how to install webkit for getting rendered sites
+    http://code.google.com/p/pywebkitgtk/ and download, untar
+    cd to directory
+    install python-dev, libxslt-dev, python-gtk2-dev, libwebkit-dev
+    run ./configure --prefix=/pywebkitgtk/install/path
+    make
+    make install (root)
+    http://blog.motane.lu/2009/06/18/pywebkitgtk-execute-javascript-from-python/
+
