@@ -38,24 +38,31 @@ def printOfficialRatings(ratings):
 def getComments(url, body):
     lastPage =  int(body.findAll('div', { 'class' : 'paging'})[0].findAll('li', { 'class' : 'btn' })[-1]['page'])
     comments = []
-    for pageNum in range(1, lastPage + 1):
-        commentPageURL = 'http://www.mywot.com/en/scorecard/' + url.replace('http://', '') + '#page-' + str(pageNum)
-        download.main(url=commentPageURL)
 
-#    for pageNum in range(1, lastPage + 1):
-#        if pageNum:
-#            commentPageURL = 'http://www.mywot.com/en/scorecard/' + url.replace('http://', '') + '#page-' + str(pageNum)
-#            html = getRenderedSite.main(url=commentPageURL)
-#            if 'Galaxyfox' in html:
-#                print 'its the second page!'
-#            commentsSection = BeautifulSoup(html).find('div', { 'class' : 'sc-comment-row' })
-#            for c in commentsSection.findAll('div', { 'class' : 'sc-comment' }):
-#                comment = {}
-#                comment['date'] = c.find('em', { 'class' : 'date' }).text
-#                comment['author'] = c.find('strong', { 'class' : 'author' }).text
-#                if pageNum == 1 or pageNum == 2:
-#                    print comment['author']
-#    print "getComments Not Done"
+    # Download all of the pages after they have been rendered - there is still a bug here...depending uponhow long it takes to get these pages the javascript may not have completed running...
+    #for pageNum in range(1, lastPage + 1):
+       # commentPageURL = 'http://www.mywot.com/en/scorecard/' + url.replace('http://', '') + '#page-' + str(pageNum)
+       # download.main(url=commentPageURL)
+
+    # Parse rendered pages
+    for pageNum in range(1, lastPage + 1):
+        #fileName = os.getcwd() + '/temp/temp-' + str(pageNum) + '.html'
+        #f = open(fileName, 'r')
+        #html = f.read()
+        #f.close()
+        #os.remove(fileName)
+
+        commentPageURL = 'http://www.mywot.com/en/scorecard/' + url.replace('http://', '') + '#page-' + str(pageNum)
+        html = download.main(url=commentPageURL)
+
+        commentsSection = BeautifulSoup(html).find('div', { 'class' : 'sc-comment-row' })
+        print 'Results for comments page ' + str(pageNum) + '\n'
+        for c in commentsSection.findAll('div', { 'class' : 'sc-comment' }):
+            comment = {}
+            comment['date'] = c.find('em', { 'class' : 'date' }).text
+            comment['author'] = c.find('strong', { 'class' : 'author' }).text
+            print comment['author']
+    print "getComments Not Done"
 
 def getThirdPartyInfo(url):
     print "getThirdPartyInfo Not Done"

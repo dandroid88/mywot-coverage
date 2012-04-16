@@ -21,6 +21,7 @@ class Crawler(gtk.Window):
         gtk.Window.__init__(self)
         self._url = url
         self._file = 'temp/temp-' + url.split('-')[-1] + '.html'
+        self._html = ''
  
     def crawl(self):
         view = WebView()
@@ -30,14 +31,15 @@ class Crawler(gtk.Window):
         gtk.main()
     
     def _finished_loading(self, view, frame):
-        with open(self._file, 'w') as f:
-            f.write(view.get_html())
+        self.html = view.get_html()
+#        with open(self._file, 'w') as f:
+#            f.write(view.get_html())
         gtk.main_quit()
 
 def main(url):
     crawler = Crawler(url)
     crawler.crawl()
-
+    return crawler.html
  
 if __name__ == '__main__':
     main(url)
