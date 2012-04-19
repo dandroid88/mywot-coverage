@@ -35,11 +35,12 @@ class Crawler(gtk.Window):
 #        with open(self._file, 'w') as f:
 #            f.write(view.get_html())
         gtk.main_quit()
+#        return self.html
 
 def main(url):
     crawler = Crawler(url)
     crawler.crawl()
-    return crawler.html
+    return self.html
  
 if __name__ == '__main__':
     main(url)

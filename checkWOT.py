@@ -1,10 +1,14 @@
 #!/usr/bin/env python
-import sys, urllib2, re, os, sqlite3
+import sys, urllib2, re, os, MySQLdb
 from xml.dom.minidom import parseString
 from bs4 import BeautifulSoup
 import downloadRenderedPage as download
-import getURLs
+import getURLs_recursive
 import datetime
+
+FOLDER = str(datetime.datetime.now()).replace(' ', '_')
+
+
 
 def runBatch(file_name):
     f = open(file_name, 'r')
@@ -54,14 +58,21 @@ def getComments(url, body):
     for pageNum in range(1, lastPage + 1):
         urls.append('http://www.mywot.com/en/scorecard/' + url.replace('http://', '') + '#page-' + str(pageNum))
 
+    # Using downloadRenderedPage
+    for url in urls:
+        html = download.main(url)
+
+    # Using getUrls
     # Fetch all of the URLs
-    pages = getURLs.main(urls)
+    #pages = getURLs_recursive.main(urls)
+    
+
 
     # Parse rendered pages
-    for page in pages.keys():
-        html = pages[page]
+    #for page in pages.keys():
+        #html = pages[page]
         commentsSection = BeautifulSoup(html).find('div', { 'class' : 'sc-comment-row' })
-        print 'Results for comments page ' + str(pageNum) + '\n'
+        print 'Results for comments page\n'
         for c in commentsSection.findAll('div', { 'class' : 'sc-comment' }):
             comment = {}
             comment['date'] = c.find('em', { 'class' : 'date' }).text
@@ -77,28 +88,29 @@ def getCommentStatistics(url, body):
     table = body.find('table', id='category-table')
     for category in table.findAll('tr'):
         commentCount[category.find('div', { 'class' : 'cat-title'}).text] = category.find('span').text
-    print '\nComment Statistics:'
-    print commentCount
     return commentCount
 
 def getAllInfo(url):
-        # Request the html page
-        req = urllib2.Request('http://www.mywot.com/en/scorecard/' + url, None, headers)
-        ratingsPageBody = BeautifulSoup(urllib2.urlopen(req).read()).body
-        # Extract information
-        savePage(url, ratingsPageBody)
-        getOfficialRatings(url)
-#        getComments(url, ratingsPageBody)
-        getCommentStatistics(url, ratingsPageBody)
-#        getThirdPartyInfo(url)
+        ratings = getOfficialRatings(url)
+        if ratings:
+            # Request the html page
+            req = urllib2.Request('http://www.mywot.com/en/scorecard/' + url, None, headers)
+            ratingsPageBody = BeautifulSoup(urllib2.urlopen(req).read()).body
 
-FOLDER = str(datetime.datetime.now()).replace(' ', '_')
+            # Extract information
+            savePage(url, ratingsPageBody)
+            getCommentStatistics(url, ratingsPageBody)
+            getComments(url, ratingsPageBody)
+        #    getThirdPartyInfo(url)
+#            saveToDatabase()
+        else:
+            print 'Not in WOT Database'
+#            saveToDatabase(url)
 
 if (len(sys.argv) > 1):
-
+    os.mkdir(os.getcwd() + '/Site Samples/' + FOLDER)
     if '-batch' in sys.argv[1]:
         print 'Running batch on ' + sys.argv[2]
-        os.mkdir(os.getcwd() + '/Site Samples/' + FOLDER)
         runBatch(sys.argv[2])
     else:
         url = sys.argv[1]
