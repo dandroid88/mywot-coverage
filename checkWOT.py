@@ -112,4 +112,4 @@ if (len(sys.argv) > 1):
         else:
             getAllInfo(url)
 else:
-    print 'Usage: checkWOT http://www.some_url.com'
+    print 'Usage: checkWOT.py http://www.some_url.com    OR     ./checkWOT.py -batch listOfURLs.txt'
