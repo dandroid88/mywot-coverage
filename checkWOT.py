@@ -107,6 +107,7 @@ class MywotEntry():
             self.getComments()
             self.getThirdPartyInfo()
             self.saveToDatabase()
+            
         else:
             print 'Not in WOT Database'
             self.saveToDatabase()
@@ -123,9 +124,10 @@ def runBatch(file_name, startingPoint, howMany):
         if iteration >= startingPoint and iteration < endPoint:
             iterStartTime = datetime.datetime.now()
             entry = MywotEntry(url.split(' ')[0].strip('\n\r')).getAllInfo()
-            totalNumComments += len(entry.comments)
             urlCount += 1
-            print 'Iteration ' + str(iteration) + ' time was ' + str(datetime.datetime.now() - iterStartTime)
+            if entry.ratings:
+                totalNumComments += len(entry.comments)
+                print 'URL ' + str(iteration) + ' took ' + str(datetime.datetime.now() - iterStartTime) + ' and had ' + str(len(entry.comments)) + ' comments (' + entry.url + ')' 
         iteration += 1
     runtime = datetime.datetime.now() - startTime
     print '\n-----------------------------------'
@@ -138,7 +140,6 @@ def runBatch(file_name, startingPoint, howMany):
 if (len(sys.argv) > 1):
     os.mkdir(os.getcwd() + FOLDER)
     if '-batch' in sys.argv[1]:
-        #print 'Running batch on ' + sys.argv[2]
         runBatch(sys.argv[2], int(sys.argv[3]), int(sys.argv[4]))
     else:
         url = sys.argv[1]
