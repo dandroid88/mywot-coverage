@@ -19,7 +19,6 @@ class MywotEntry():
 
     def getOfficialRatings(self):
         apiURL = 'http://api.mywot.com/0.4/public_query2?target=' + self.url.replace('http://', '').split('/')[0]
-        print apiURL
         dom = parseString(urllib2.urlopen(apiURL).read())
         categoryNames = { '0' : 'Trustworthiness', '1' : 'Vendor reliability', '2' : 'Privacy', '4' : 'Child safety'}
         ratings = {}
@@ -49,10 +48,13 @@ class MywotEntry():
         f.close()
 
     def saveToDatabase(self):
-        print 'saveToDatabase not implemented'
+        notDone = True
+        #print 'saveToDatabase not implemented'
+
 
     def getThirdPartyInfo(self):
-        print "getThirdPartyInfo Not Done"
+        notDone = True        
+        #print "getThirdPartyInfo Not Done"
 
     def getComments(self):
         display = Display(visible=None).start()
@@ -60,7 +62,6 @@ class MywotEntry():
         paging = self.body.findAll('div', { 'class' : 'paging'})
         if paging:
             lastPage =  int(paging[0].findAll('li', { 'class' : 'btn' })[-1]['page'])
-            print lastPage
         comments = []
 
         # Get a list of URLs to fetch
@@ -111,20 +112,33 @@ class MywotEntry():
             self.saveToDatabase()
         return self
 
-def runBatch(file_name, startingPoint = 0, howMany = 1000000000):
+def runBatch(file_name, startingPoint, howMany):
+    totalNumComments = 0
+    urlCount = 0
     startTime = datetime.datetime.now()
+    endPoint = startingPoint + howMany
     f = open(file_name, 'r')
+    iteration = 0
     for url in f:
-        if startingPoint < howMany + startingPoint:
-            MywotEntry(url.split(' ')[0].strip('\n\r')).getAllInfo()
-            startingPoint += 1
-            print 'Iteration time was ' + str(datetime.datetime.now() - startTime)
-    print 'Total Runtime was ' + str(datetime.datetime.now() - startTime)
+        if iteration >= startingPoint and iteration < endPoint:
+            iterStartTime = datetime.datetime.now()
+            entry = MywotEntry(url.split(' ')[0].strip('\n\r')).getAllInfo()
+            totalNumComments += len(entry.comments)
+            urlCount += 1
+            print 'Iteration ' + str(iteration) + ' time was ' + str(datetime.datetime.now() - iterStartTime)
+        iteration += 1
+    runtime = datetime.datetime.now() - startTime
+    print '\n-----------------------------------'
+    print 'Total number of URLs:\t\t', urlCount
+    print 'Total Number of Comments:\t', totalNumComments
+    print 'Average Number of Comments:\t', totalNumComments / urlCount
+    print 'Average Runtime per URL:\t', runtime / urlCount
+    print 'Total Runtime:\t\t\t', runtime
 
 if (len(sys.argv) > 1):
     os.mkdir(os.getcwd() + FOLDER)
     if '-batch' in sys.argv[1]:
-        print 'Running batch on ' + sys.argv[2]
+        #print 'Running batch on ' + sys.argv[2]
         runBatch(sys.argv[2], int(sys.argv[3]), int(sys.argv[4]))
     else:
         url = sys.argv[1]
