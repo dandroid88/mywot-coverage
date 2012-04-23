@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-import sys, urllib2, re, os, MySQLdb, datetime, time
+import sys, urllib2, re, os, MySQLdb, time
+import datetime
 from xml.dom.minidom import parseString
 from bs4 import BeautifulSoup
 from webkit_browser.webkit_browser import Browser
@@ -17,7 +18,9 @@ class MywotEntry():
         self.url = url
 
     def getOfficialRatings(self):
-        dom = parseString(urllib2.urlopen('http://api.mywot.com/0.4/public_query2?target=' + self.url.replace('http://', '')).read())
+        apiURL = 'http://api.mywot.com/0.4/public_query2?target=' + self.url.replace('http://', '').split('/')[0]
+        print apiURL
+        dom = parseString(urllib2.urlopen(apiURL).read())
         categoryNames = { '0' : 'Trustworthiness', '1' : 'Vendor reliability', '2' : 'Privacy', '4' : 'Child safety'}
         ratings = {}
         for application in dom.getElementsByTagName('application'):
@@ -53,7 +56,11 @@ class MywotEntry():
 
     def getComments(self):
         display = Display(visible=None).start()
-        lastPage =  int(self.body.findAll('div', { 'class' : 'paging'})[0].findAll('li', { 'class' : 'btn' })[-1]['page'])
+        lastPage = 1
+        paging = self.body.findAll('div', { 'class' : 'paging'})
+        if paging:
+            lastPage =  int(paging[0].findAll('li', { 'class' : 'btn' })[-1]['page'])
+            print lastPage
         comments = []
 
         # Get a list of URLs to fetch
@@ -90,7 +97,7 @@ class MywotEntry():
         self.getOfficialRatings()
         if self.ratings:
             # Request the html page
-            req = urllib2.Request('http://www.mywot.com/en/scorecard/' + url, None, HEADERS)
+            req = urllib2.Request('http://www.mywot.com/en/scorecard/' + self.url, None, HEADERS)
             self.body = BeautifulSoup(urllib2.urlopen(req).read()).body
 
             # Extract information
@@ -104,16 +111,21 @@ class MywotEntry():
             self.saveToDatabase()
         return self
 
-def runBatch(file_name):
+def runBatch(file_name, startingPoint = 0, howMany = 1000000000):
+    startTime = datetime.datetime.now()
     f = open(file_name, 'r')
     for url in f:
-        MywotEntry(url.strip('\n\r')).getAllInfo()
+        if startingPoint < howMany + startingPoint:
+            MywotEntry(url.split(' ')[0].strip('\n\r')).getAllInfo()
+            startingPoint += 1
+            print 'Iteration time was ' + str(datetime.datetime.now() - startTime)
+    print 'Total Runtime was ' + str(datetime.datetime.now() - startTime)
 
 if (len(sys.argv) > 1):
     os.mkdir(os.getcwd() + FOLDER)
     if '-batch' in sys.argv[1]:
         print 'Running batch on ' + sys.argv[2]
-        runBatch(sys.argv[2])
+        runBatch(sys.argv[2], int(sys.argv[3]), int(sys.argv[4]))
     else:
         url = sys.argv[1]
         if not re.match('(?=http)\w+', url):
@@ -122,4 +134,4 @@ if (len(sys.argv) > 1):
             entry = MywotEntry(url.strip('\n\r')).getAllInfo()
             entry.printOfficialRatings()
 else:
-    print 'Usage: checkWOT.py http://www.some_url.com    OR     ./checkWOT.py -batch listOfURLs.txt'
+    print 'Usage: checkWOT.py http://www.some_url.com    OR     ./checkWOT.py -batch listOfURLs.txt 0 10'
