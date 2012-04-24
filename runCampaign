@@ -1,0 +1,17 @@
+#!/bin/bash
+
+DATE=$(date +"%T")
+RESULTS="Logs/results-$DATE.txt"
+INCREMENT=10
+ITERATIONS=10
+
+echo "Running Campaign in increments of $INCREMENT" | tee -a $RESULTS
+echo "" | tee -a $RESULTS
+
+for BATCH in `seq 0 $ITERATIONS`; do
+    let START=$INCREMENT*$BATCH
+    echo "Currently running batch starting at $START" | tee -a $RESULTS
+    ./checkWOT.py -batch URLs.txt $START $INCREMENT 2>&- | tee -a $RESULTS
+    echo "" | tee -a $RESULTS
+done
+
