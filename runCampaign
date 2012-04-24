@@ -2,16 +2,20 @@
 
 DATE=$(date +"%T")
 RESULTS="Logs/results-$DATE.txt"
+URLFILE="top_10000.txt"
 INCREMENT=10
 ITERATIONS=10
+START=0
+let END=$INCREMENT*$ITERATIONS+$START
 
 echo "Running Campaign in increments of $INCREMENT" | tee -a $RESULTS
 echo "" | tee -a $RESULTS
 
 for BATCH in `seq 0 $ITERATIONS`; do
-    let START=$INCREMENT*$BATCH
-    echo "Currently running batch starting at $START" | tee -a $RESULTS
-    ./checkWOT.py -batch URLs.txt $START $INCREMENT 2>&- | tee -a $RESULTS
+    let LOCALSTART=$INCREMENT*$BATCH+$START
+    echo "Currently running batch starting at $LOCALSTART" | tee -a $RESULTS
+    ./checkWOT.py -batch $URLFILE $LOCALSTART $INCREMENT 2>&- | tee -a $RESULTS
     echo "" | tee -a $RESULTS
 done
 
+echo "Ran from $START to $END on $URLFILE" | tee -a $RESULTS
