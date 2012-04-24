@@ -82,12 +82,17 @@ class MywotEntry():
                 comment = {}
                 comment['date'] = c.find('em', { 'class' : 'date' }).text
                 comment['author'] = c.find('strong', { 'class' : 'author' }).text
-                #Not sure why, but the order of these strip statements seems to matter, also, there still seems to be trailing tabs...
                 comment['text'] = c.find('p', {'class' : 'sc-full-text'}).text.strip(' \n\r\t')
                 comment['description'] = c.find('p', {'class' : 'note'}).text
                 comment['karma'] = c.find('p', {'class' : 'note'})['class'][1]
-                comment['upVotes'] = c.find('li', {'class' : 'icon-like'}).contents[0].text
-                comment['downVotes'] = c.find('li', {'class' : 'icon-unlike'}).contents[0].text
+                if hasattr(c.find('li', {'class' : 'icon-like'}), 'contents'):
+                    comment['commentsEnabled'] = True
+                    comment['upVotes'] = c.find('li', {'class' : 'icon-like'}).contents[0].text
+                    comment['downVotes'] = c.find('li', {'class' : 'icon-unlike'}).contents[0].text
+                else:
+                    comment['commentsEnabled'] = False
+                    comment['upVotes'] = '0'
+                    comment['downVotes'] = '0'
                 comments.append(comment)
         del b
         display.stop()
@@ -109,7 +114,7 @@ class MywotEntry():
             self.saveToDatabase()
             
         else:
-            print 'Not in WOT Database'
+            print 'Not in WOT Database (' + self.url + ')'
             self.saveToDatabase()
         return self
 
