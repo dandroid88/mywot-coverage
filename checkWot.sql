@@ -8,6 +8,8 @@ CREATE TABLE IF NOT EXISTS urls
 (
 	url_id INT NOT NULL,
 	url VARCHAR(1024), 
+    
+    --Official Scores
 	Trustworthiness INT, 
 	Trust_confidence INT, 
 	Vendor_Reliability INT, 
@@ -16,10 +18,15 @@ CREATE TABLE IF NOT EXISTS urls
 	Privacy_confidence INT, 
 	Child_safety INT, 
 	Child_confidence INT, 
-    malicious INT,
+
+    --Used for the URLs.txt File with format:
+    --  http://bit.ly/jU0kgr nonspam 1 1309265860 1309265860 
+    spam INT,
+    occurances INT,    
     time_1 INT,
     time_2 INT,
-    
+
+    --Comment Statistics
     good_site INT,
     useful_informative INT,
     entertaining INT,
@@ -41,6 +48,7 @@ CREATE TABLE IF NOT EXISTS comments
 	text VARCHAR(64000),
     description VARCHAR(100),
     karma VARCHAR(100),
+    votesDisabled INT,
     upvotes INT,
     downvotes INT,
 	PRIMARY KEY (comment_id),
