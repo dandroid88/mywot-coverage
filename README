@@ -1,3 +1,9 @@
 https://github.com/emyller/webkitcrawler
 sudo apt-get install python-qt4
 Need some other packages, install as needed...
+
+Read in the sql file to MySQL after logging in:
+use mywot;
+source checkWot.sql;
+
+
