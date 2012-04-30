@@ -54,15 +54,17 @@ class MywotEntry():
                      'Ethical issues' : 'eth_issues', 
                      'Useless' : 'useless' , 
                      'Other' : 'other'}
-        commentCount = {}
+        commentCats = {}
         table = self.body.find('table', id='category-table')
+        for cat in cat_names:
+            commentCats[cat] = '0'
         for category in table.findAll('tr'):
-            commentCount[category.find('div', { 'class' : 'cat-title'}).text] = category.find('span').text
-        self.commentStats =  commentCount
-        print "\n"
-        for cat in commentCount:
-            print cat
-        print "\n"        
+            commentCats[category.find('div', { 'class' : 'cat-title'}).text] = category.find('span').text
+        self.commentStats = commentCats
+#        print "\n"
+#        for cat in commentCats:
+#            print cat + ': ' + commentCats[cat]
+#        print "\n"        
         
 
     def savePageToFile(self):
@@ -79,7 +81,7 @@ class MywotEntry():
         #chain_id = self.chainID
 
         # Miscelanious Things not implemented yet
-        spam = False
+        spam_nonspam = False
         occurances = False
         time_1 = 1
         time_2 = 2
@@ -95,42 +97,58 @@ class MywotEntry():
         Child_safety = self.ratings['Child safety'][1]
         Child_confidence = self.ratings['Child safety'][0] 
 
-        sql = """INSERT INTO urls(url, Trustworthiness,
-                 Trust_confidence, Vendor_Reliability, 
+        stats = self.commentStats
+
+        sql = """INSERT INTO urls(url, Trustworthiness, Trust_confidence, Vendor_Reliability, 
                  Vendor_confidence, Privacy, Privacy_confidence,
-	     		 Child_safety, Child_confidence, chain_id)
-	     		 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+	     		 Child_safety, Child_confidence, spam_nonspam, occurances, time_1, time_2, 
+                 good_site, useful_informative, entertaining, good_cus_exper,
+                 child_friendly, spam, annoying_ads, bad_exper, phishing, 
+                 malicious_viruses, bro_exploit, spyware, adult_content, 
+                 hateful, eth_issues, useless, other, chain_id)
+	     		 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                         %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                         %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
 
         try:
             print 'Entering URL info into database'
-            cursor.execute(sql, (url, Trustworthiness, Trust_confidence, 
+            cursor.execute(sql.replace('\n', ''), (url, Trustworthiness, Trust_confidence, 
                                  Vendor_Reliability, Vendor_confidence, Privacy, Privacy_confidence, 
-                                 Child_safety, Child_confidence, chain_id))
+                                 Child_safety, Child_confidence, spam_nonspam, occurances, time_1, time_2, 
+                                 stats['Good site'], stats['Useful, informative'], stats['Entertaining'],
+                                 stats['Good customer experience'], stats['Child friendly'], stats['Spam'], 
+                                 stats['Annoying ads or popups'], stats['Bad cusotmer experience'], 
+                                 stats['Phishing or other scams'], stats['Malicious content, viruses'], 
+                                 stats['Browser exploit'], stats['Spyware or adware'], 
+                                 stats['Adult content'], stats['Hateful or questionable content'], 
+                                 stats['Ethical issues'], stats['Useless'], stats['Other'], chain_id))
             db.commit()
-        except:
+        except MySQLdb.Error, e:
+            print "%s" %e
             db.rollback()
-            print "Inserting URL info Failed"
+            print "\nInserting URL info Failed\n"
 
 
-        urlID = 0
+        urlID = db.insert_id()
 
         # comments
-#        sql = """INSERT INTO comments(comment_date, author, 
-#                 test, description, karma, votesEnabled, upvotes, 
-#                 downvotes, url_id)
-#                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+        sql = """INSERT INTO comments(comment_date, author, 
+                 text, description, karma, votesEnabled, upvotes, 
+                 downvotes, url_id)
+                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"""
 
-#        for comment in self.comments:
-#            try:
-#                print 'Entering comment into database'
-#                cursor.execute(sql, (comment['date'], comment['author'], 
-#                                     comment['text'], comment['description'], 
-#                                     comment['karma'], comment['votesEnabled'], 
-#                                     comment['upVotes'], comment['downVotes'], urlID))
-#                db.commit()
-#            except:
-#                db.rollback()
-#                print "Inserting Comment Failed"
+        for comment in self.comments:
+            try:
+                print 'Entering comment into database'
+                cursor.execute(sql, (comment['date'], comment['author'], 
+                                     comment['text'], comment['description'], 
+                                     comment['karma'], comment['votesEnabled'], 
+                                     comment['upVotes'], comment['downVotes'], urlID))
+                db.commit()
+            except MySQLdb.Error, e:
+                print "%s" %e
+                db.rollback()
+                print "\nInserting Comment Failed\n"
 
         db.close()
         print 'saveToDatabase not finished or tested'
@@ -164,7 +182,7 @@ class MywotEntry():
             commentsSection = BeautifulSoup(html).find('div', { 'class' : 'sc-comment-row' })
             for c in commentsSection.findAll('div', { 'class' : 'sc-comment' }):
                 comment = {}
-                comment['date'] = c.find('em', { 'class' : 'date' }).text
+                comment['date'] = time.strptime(c.find('em', { 'class' : 'date' }).text, "%m/%d/%Y")
                 comment['author'] = c.find('strong', { 'class' : 'author' }).text
                 comment['text'] = c.find('p', {'class' : 'sc-full-text'}).text.strip(' \n\r\t')
                 comment['description'] = c.find('p', {'class' : 'note'}).text

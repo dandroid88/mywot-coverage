@@ -1,6 +1,9 @@
 -- Drop all of the tables
 -- drop table chains, urls, comments;
 
+-- Load this file
+-- source checkWot.sql
+
 
 CREATE TABLE IF NOT EXISTS chains
 (
@@ -14,7 +17,8 @@ CREATE TABLE IF NOT EXISTS urls
 (
 	url_id INT AUTO_INCREMENT PRIMARY KEY,
 	url VARCHAR(1024), 
-    
+    chain_id INT,    
+
 	Trustworthiness INT, 
 	Trust_confidence INT, 
 	Vendor_Reliability INT, 
@@ -24,26 +28,36 @@ CREATE TABLE IF NOT EXISTS urls
 	Child_safety INT, 
 	Child_confidence INT, 
 
-    spam INT,
+    spam_nonspam INT,
     occurances INT,    
     time_1 INT,
     time_2 INT,
 
-    good_site INT,
-    useful_informative INT,
-    entertaining INT,
-    good_cus_exper INT,
+    good_site INT, 
+    useful_informative INT, 
+    entertaining INT, 
+    good_cus_exper INT, 
     child_friendly INT,
-    spyware_adware INT,
+    spam INT, 
+    annoying_ads INT, 
+    bad_exper INT,
+    phishing INT, 
+    malicious_viruses INT,
+    bro_exploit INT,
+    spyware INT,
     adult_content INT,
+    hateful INT,
+    eth_issues INT,
+    useless INT,
     other INT,
 
-	FOREIGN KEY (url_id) REFERENCES chains(chain_id)
+	FOREIGN KEY (chain_id) REFERENCES chains(chain_id)
 );
 
 CREATE TABLE IF NOT EXISTS comments
 (
 	comment_id INT AUTO_INCREMENT PRIMARY KEY,
+    url_id int,
     comment_date date,
     author VARCHAR(100),
 	text VARCHAR(64000),
@@ -52,6 +66,6 @@ CREATE TABLE IF NOT EXISTS comments
     votesEnabled INT,
     upvotes INT,
     downvotes INT,
-	FOREIGN KEY (comment_id) REFERENCES urls(url_id)
+	FOREIGN KEY (url_id) REFERENCES urls(url_id)
 );
 
