@@ -37,11 +37,33 @@ class MywotEntry():
         print '\n'
 
     def getCommentStatistics(self):
+        cat_names = {'Good site' : 'good_site', 
+                     'Useful, informative' : 'useful_informative', 
+                     'Entertaining' : 'entertaining', 
+                     'Good customer experience' : 'good_cus_exper', 
+                     'Child friendly' : 'child_friendly', 
+                     'Spam' : 'spam', 
+                     'Annoying ads or popups' : 'annoying_ads', 
+                     'Bad cusotmer experience' : 'bad_exper', 
+                     'Phishing or other scams' : 'phishing', 
+                     'Malicious content, viruses' : 'malicious_viruses', 
+                     'Browser exploit' : 'bro_exploit', 
+                     'Spyware or adware' : 'spyware', 
+                     'Adult content' : 'adult_content', 
+                     'Hateful or questionable content' : 'hateful', 
+                     'Ethical issues' : 'eth_issues', 
+                     'Useless' : 'useless' , 
+                     'Other' : 'other'}
         commentCount = {}
         table = self.body.find('table', id='category-table')
         for category in table.findAll('tr'):
             commentCount[category.find('div', { 'class' : 'cat-title'}).text] = category.find('span').text
         self.commentStats =  commentCount
+        print "\n"
+        for cat in commentCount:
+            print cat
+        print "\n"        
+        
 
     def savePageToFile(self):
         f = open(os.getcwd() + FOLDER + '/' + self.url.replace('http://', '').replace('/', '_') + '.txt', 'w')
@@ -49,8 +71,69 @@ class MywotEntry():
         f.close()
 
     def saveToDatabase(self):
-        notDone = True
-        #print 'saveToDatabase not implemented'
+        db = MySQLdb.connect(host="localhost", user="dan", passwd="", db="mywot")
+        cursor = db.cursor()
+
+        # Somewhere else we need to have some logic to get the chain ID       
+        chain_id = 1
+        #chain_id = self.chainID
+
+        # Miscelanious Things not implemented yet
+        spam = False
+        occurances = False
+        time_1 = 1
+        time_2 = 2
+
+        # urls 
+        url = self.url
+        Trustworthiness = self.ratings['Trustworthiness'][1]
+        Trust_confidence = self.ratings['Trustworthiness'][0]
+        Vendor_Reliability = self.ratings['Vendor reliability'][1]
+        Vendor_confidence = self.ratings['Vendor reliability'][0]
+        Privacy = self.ratings['Privacy'][1]
+        Privacy_confidence = self.ratings['Privacy'][0] 
+        Child_safety = self.ratings['Child safety'][1]
+        Child_confidence = self.ratings['Child safety'][0] 
+
+        sql = """INSERT INTO urls(url, Trustworthiness,
+                 Trust_confidence, Vendor_Reliability, 
+                 Vendor_confidence, Privacy, Privacy_confidence,
+	     		 Child_safety, Child_confidence, chain_id)
+	     		 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+
+        try:
+            print 'Entering URL info into database'
+            cursor.execute(sql, (url, Trustworthiness, Trust_confidence, 
+                                 Vendor_Reliability, Vendor_confidence, Privacy, Privacy_confidence, 
+                                 Child_safety, Child_confidence, chain_id))
+            db.commit()
+        except:
+            db.rollback()
+            print "Inserting URL info Failed"
+
+
+        urlID = 0
+
+        # comments
+#        sql = """INSERT INTO comments(comment_date, author, 
+#                 test, description, karma, votesEnabled, upvotes, 
+#                 downvotes, url_id)
+#                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+
+#        for comment in self.comments:
+#            try:
+#                print 'Entering comment into database'
+#                cursor.execute(sql, (comment['date'], comment['author'], 
+#                                     comment['text'], comment['description'], 
+#                                     comment['karma'], comment['votesEnabled'], 
+#                                     comment['upVotes'], comment['downVotes'], urlID))
+#                db.commit()
+#            except:
+#                db.rollback()
+#                print "Inserting Comment Failed"
+
+        db.close()
+        print 'saveToDatabase not finished or tested'
 
 
     def getThirdPartyInfo(self):
@@ -87,11 +170,11 @@ class MywotEntry():
                 comment['description'] = c.find('p', {'class' : 'note'}).text
                 comment['karma'] = c.find('p', {'class' : 'note'})['class'][1]
                 if hasattr(c.find('li', {'class' : 'icon-like'}), 'contents'):
-                    comment['commentsEnabled'] = True
+                    comment['votesEnabled'] = True
                     comment['upVotes'] = c.find('li', {'class' : 'icon-like'}).contents[0].text
                     comment['downVotes'] = c.find('li', {'class' : 'icon-unlike'}).contents[0].text
                 else:
-                    comment['commentsEnabled'] = False
+                    comment['votesEnabled'] = False
                     comment['upVotes'] = '0'
                     comment['downVotes'] = '0'
                 comments.append(comment)
@@ -119,7 +202,7 @@ class MywotEntry():
             self.saveToDatabase()
         return self
 
-def runBatch(file_name, startingPoint, howMany):
+def runBatch(file_name, startingPoint, howMany, follow):
     totalNumComments = 0
     urlCount = 0
     startTime = datetime.datetime.now()
@@ -146,7 +229,7 @@ def runBatch(file_name, startingPoint, howMany):
 if (len(sys.argv) > 1):
     os.mkdir(os.getcwd() + FOLDER)
     if '-batch' in sys.argv[1]:
-        runBatch(sys.argv[2], int(sys.argv[3]), int(sys.argv[4]))
+        runBatch(sys.argv[2], int(sys.argv[3]), int(sys.argv[4]), follow)
     else:
         url = sys.argv[1]
         if not re.match('(?=http)\w+', url):

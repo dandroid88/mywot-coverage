@@ -12,16 +12,27 @@ def followChain(url):
     b = Browser()
     b.open(url)
     dirtyhtml = b.main_frame['content'].read()
+    if url in b.history:
+        print 'Did not follow or is not a chain'    
+    print url + ':'
     print b.history
+    print ' '
+
     unicoded = str(dirtyhtml.encode("ascii", 'ignore')).decode("utf-8")
     html = eval(repr(unicoded)[1:])
     b.close()
+    del b
 
 if (len(sys.argv) > 1):
-    url = sys.argv[1]
-    if not re.match('(?=http)\w+', url):
+    if '-batch' in sys.argv[1]:
+        f = open(sys.argv[2], 'r')
+        display = Display(visible=None).start()
+        for url in f:
+            followChain(url.split(' ')[0])
+        display.stop()
+    elif not re.match('(?=http)\w+',  sys.argv[1]):
         print "Please provide a valid URL"
     else:
-        followChain(url.strip('\n\r'))
+        followChain(sys.argv[1].strip('\n\r'))
 else:
     print 'Usage: followChain.py http://www.some_url.com'
