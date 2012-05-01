@@ -15,8 +15,10 @@ HEADERS = { 'User-Agent' : 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/535.19 (
 
 
 class MywotEntry():
-    def __init__(self, url):
+    def __init__(self, url, extraInfo = None, chainID = 1):
         self.url = url
+        self.chainID = chainID
+        self.extraInfo = extraInfo
 
     def getOfficialRatings(self):
         apiURL = 'http://api.mywot.com/0.4/public_query2?target=' + self.url.replace('http://', '').split('/')[0]
@@ -61,11 +63,6 @@ class MywotEntry():
         for category in table.findAll('tr'):
             commentCats[category.find('div', { 'class' : 'cat-title'}).text] = category.find('span').text
         self.commentStats = commentCats
-#        print "\n"
-#        for cat in commentCats:
-#            print cat + ': ' + commentCats[cat]
-#        print "\n"        
-        
 
     def savePageToFile(self):
         f = open(os.getcwd() + FOLDER + '/' + self.url.replace('http://', '').replace('/', '_') + '.txt', 'w')
@@ -75,10 +72,6 @@ class MywotEntry():
     def saveToDatabase(self):
         db = MySQLdb.connect(host="localhost", user="dan", passwd="", db="mywot")
         cursor = db.cursor()
-
-        # Somewhere else we need to have some logic to get the chain ID       
-        chain_id = 1
-        #chain_id = self.chainID
 
         # Miscelanious Things not implemented yet
         spam_nonspam = False
@@ -96,9 +89,9 @@ class MywotEntry():
         Privacy_confidence = self.ratings['Privacy'][0] 
         Child_safety = self.ratings['Child safety'][1]
         Child_confidence = self.ratings['Child safety'][0] 
-
         stats = self.commentStats
 
+        urlID = None
         sql = """INSERT INTO urls(url, Trustworthiness, Trust_confidence, Vendor_Reliability, 
                  Vendor_confidence, Privacy, Privacy_confidence,
 	     		 Child_safety, Child_confidence, spam_nonspam, occurances, time_1, time_2, 
@@ -111,7 +104,7 @@ class MywotEntry():
                          %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
 
         try:
-            print 'Entering URL info into database'
+            #print 'Entering URL info into database'
             cursor.execute(sql.replace('\n', ''), (url, Trustworthiness, Trust_confidence, 
                                  Vendor_Reliability, Vendor_confidence, Privacy, Privacy_confidence, 
                                  Child_safety, Child_confidence, spam_nonspam, occurances, time_1, time_2, 
@@ -121,37 +114,37 @@ class MywotEntry():
                                  stats['Phishing or other scams'], stats['Malicious content, viruses'], 
                                  stats['Browser exploit'], stats['Spyware or adware'], 
                                  stats['Adult content'], stats['Hateful or questionable content'], 
-                                 stats['Ethical issues'], stats['Useless'], stats['Other'], chain_id))
+                                 stats['Ethical issues'], stats['Useless'], stats['Other'], self.chainID))
             db.commit()
+            urlID = cursor.lastrowid
+            print urlID
         except MySQLdb.Error, e:
             print "%s" %e
             db.rollback()
-            print "\nInserting URL info Failed\n"
+            #print "\nInserting URL info Failed\n"
 
+        if not urlID is None:
+            # comments
+            print 'Entering comments into database'
+            sql = """INSERT INTO comments(comment_date, author, 
+                     text, description, karma, votesEnabled, upvotes, 
+                     downvotes, url_id)
+                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"""
 
-        urlID = db.insert_id()
+            for comment in self.comments:
+                try:
+                    cursor.execute(sql, (comment['date'], comment['author'], 
+                                         comment['text'], comment['description'], 
+                                         comment['karma'], comment['votesEnabled'], 
+                                         comment['upVotes'], comment['downVotes'], urlID))
+                    db.commit()
+                except MySQLdb.Error, e:
+                    print "%s" %e
+                    db.rollback()
+                    print "\nInserting Comment Failed\n"
 
-        # comments
-        sql = """INSERT INTO comments(comment_date, author, 
-                 text, description, karma, votesEnabled, upvotes, 
-                 downvotes, url_id)
-                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"""
-
-        for comment in self.comments:
-            try:
-                print 'Entering comment into database'
-                cursor.execute(sql, (comment['date'], comment['author'], 
-                                     comment['text'], comment['description'], 
-                                     comment['karma'], comment['votesEnabled'], 
-                                     comment['upVotes'], comment['downVotes'], urlID))
-                db.commit()
-            except MySQLdb.Error, e:
-                print "%s" %e
-                db.rollback()
-                print "\nInserting Comment Failed\n"
-
-        db.close()
-        print 'saveToDatabase not finished or tested'
+            db.close()
+            print 'saveToDatabase not finished or tested'
 
 
     def getThirdPartyInfo(self):
@@ -182,7 +175,8 @@ class MywotEntry():
             commentsSection = BeautifulSoup(html).find('div', { 'class' : 'sc-comment-row' })
             for c in commentsSection.findAll('div', { 'class' : 'sc-comment' }):
                 comment = {}
-                comment['date'] = time.strptime(c.find('em', { 'class' : 'date' }).text, "%m/%d/%Y")
+                date = c.find('em', { 'class' : 'date' }).text.split('/')
+                comment['date'] = datetime.date(int(date[2]), int(date[0]), int(date[1]))
                 comment['author'] = c.find('strong', { 'class' : 'author' }).text
                 comment['text'] = c.find('p', {'class' : 'sc-full-text'}).text.strip(' \n\r\t')
                 comment['description'] = c.find('p', {'class' : 'note'}).text
