@@ -13,11 +13,12 @@ specifically for complex pages whose content depends on JavaScript code.
 Copyright Evandro Myller - emyller.net
 '''
 
+import pprint
 from multiprocessing import Pipe, Process
 from StringIO import StringIO
 from PyQt4.QtCore import QUrl, SIGNAL
 from PyQt4.QtGui import QApplication
-from PyQt4.QtWebKit import QWebSettings, QWebView
+from PyQt4.QtWebKit import QWebSettings, QWebView, QWebPage
 
 __all__ = ('Browser',)
 
@@ -26,10 +27,14 @@ class BrowserCore(QWebView):
     '''
     The main browser class, that contains the Qt loop.
     '''
-    def __init__(self, conn, validate_page=None):
+    def __init__(self, conn, validate_page=None, page=None):
         super(BrowserCore, self).__init__()
+        self.setPage = page
+        #self.setPage.setLinkDelegationPolicy(QWebPage.DelegateAllLinks)
         self.connect(self, SIGNAL('loadFinished(bool)'),
             self._load_finished)
+        self.connect(self, SIGNAL('urlChanged(const QUrl&)'),
+            self._url_changed)
 
         settings = self.settings()
         settings.setAttribute(QWebSettings.AutoLoadImages, False)
@@ -44,9 +49,9 @@ class BrowserCore(QWebView):
         self._wait()
 
     @staticmethod
-    def _loader(conn, validate_page):
+    def _loader(conn, validate_page, page):
         app = QApplication([])
-        browser = BrowserCore(conn, validate_page)
+        browser = BrowserCore(conn, validate_page, page)
         app.exec_()
 
     def _wait(self):
@@ -70,6 +75,7 @@ class BrowserCore(QWebView):
                 children.append(child)
 
     def _load_finished(self):
+        print len(self.history())
         self.settings().clearMemoryCaches()
         if not self.validate_page or self.validate_page(self):
             url = str(self.url().toString())
@@ -77,11 +83,13 @@ class BrowserCore(QWebView):
             self.conn.send((url, main_frame,))
             self._wait()
 
+    def _url_changed(self):
+        print str(self.url().toString()) + ' CHANGEDEDEDED!'
+
     def open(self, url):
         self.load(QUrl(url))
 
-
-class Browser(object):
+class Browser(QWebPage):
     '''
     The public Browser class.
 
@@ -106,7 +114,8 @@ class Browser(object):
         self.requests = 0
 
         self._conn, bc_conn = Pipe()
-        self.process = Process(target=BrowserCore._loader, args=(bc_conn, validate,))
+        self.process = Process(target=BrowserCore._loader, args=(bc_conn, validate, self))
+        #super(QWebPage, self).__init__()
         self.process.start()
 
         self.url = None
@@ -122,3 +131,6 @@ class Browser(object):
     def close(self):
         self._conn = None
         self.process.terminate()
+
+    def userAgentForUrl(self, url):
+        return "Mozilla/5.0 (X11; Linux x86_64; rv:7.0.1) Gecko/20100101 Firefox/7.0.1"
