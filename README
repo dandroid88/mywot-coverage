@@ -1,5 +1,6 @@
 https://github.com/emyller/webkitcrawler
 sudo apt-get install python-qt4
+sudo easy_install request
 Need some other packages, install as needed...
 
 Read in the sql file to MySQL after logging in:

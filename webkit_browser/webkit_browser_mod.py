@@ -33,8 +33,8 @@ class BrowserCore(QWebView):
         #self.setPage.setLinkDelegationPolicy(QWebPage.DelegateAllLinks)
         self.connect(self, SIGNAL('loadFinished(bool)'),
             self._load_finished)
-        self.connect(self, SIGNAL('urlChanged(const QUrl&)'),
-            self._url_changed)
+#        self.connect(self, SIGNAL('urlChanged(const QUrl&)'),
+#            self._url_changed)
 
         settings = self.settings()
         settings.setAttribute(QWebSettings.AutoLoadImages, False)
@@ -75,7 +75,7 @@ class BrowserCore(QWebView):
                 children.append(child)
 
     def _load_finished(self):
-        print len(self.history())
+        #print len(self.history())
         self.settings().clearMemoryCaches()
         if not self.validate_page or self.validate_page(self):
             url = str(self.url().toString())
