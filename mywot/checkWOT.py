@@ -27,6 +27,11 @@ class MywotEntry():
         ratings = {}
         for application in dom.getElementsByTagName('application'):
             ratings[categoryNames[application.getAttribute('name')]] = [application.getAttribute('r'), application.getAttribute('c')]
+        # if there are any ratings, fill in the empty ratings with -1
+        if ratings:
+            for cat in categoryNames:
+                if not ratings[cat]:
+                    ratings[cat] = [-1,-1]
         self.ratings = ratings
 
     def printOfficialRatings(self):

@@ -31,6 +31,7 @@ def followChain(url):
     try:
         requestChain = followChainRequests(url)
         webkitChain = followChainWebkit(url)
+        signal.alarm(0)
         return combineChains(webkitChain, requestChain)
     except Exception, exc:
         print url + ' ' + str(exc)
@@ -66,6 +67,33 @@ def followChainWebkit(url):
     else:
         return history
 
+def createNewChain(url):
+    db = MySQLdb.connect(host="localhost", user="dan", passwd="", db="mywot")
+    cursor = db.cursor()
+    newID = False
+    
+    try:
+        cursor.execute("SELECT chain_id FROM chains ORDER BY chain_id DESC LIMIT 0,1")
+        newID = int(cursor.fetchall()[0][0]) + 1
+    except MySQLdb.Error, e:
+        print "%s" %e
+        print "\nInserting Chain Failed\n"
+
+    sql = """INSERT INTO chains(chain_id, original_url)
+             VALUES (%s, %s)"""
+
+    if newID:
+        try:
+            cursor.execute(sql, (newID, url))
+            db.commit()
+        except MySQLdb.Error, e:
+            print "%s" %e
+            db.rollback()
+            print "\nInserting Chain Failed\n"
+
+    db.close()
+    return newID
+
 def runBatch(file_name, startingPoint, howMany):
     totalNumComments = 0
     urlCount = 0
@@ -86,11 +114,19 @@ def runBatch(file_name, startingPoint, howMany):
                 if history and len(history) > 1:
                     chainCount += 1
                     linkLengths.append(len(history))
-                    # Call checkWOT
-                    for url in history:
-                        #print 'need to call checkWot here'
-                        print url
-                    print '\n'
+                    extraInfo = {'spam_nonspam' : 0 if 'nonspam' in url.split(' ')[1] else 1,
+                                 'occurances' : url.split(' ')[2],
+                                 'time_1' : url.split(' ')[3],
+                                 'time_2' : url.split(' ')[4]}
+                    chainID = createNewChain(url.split(' ')[0])
+                    if chainID:
+                        for url in history:
+                            print url
+                            #try:
+                            entry = MywotEntry(url.split(' ')[0].strip('\n\r'), FOLDER, extraInfo, chainID).getAllInfo()
+                            #except:
+                        #        pass
+                        print '\n'
             iteration += 1              
     finally:
         display.stop()
