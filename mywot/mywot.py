@@ -30,7 +30,7 @@ class MywotEntry():
         # if there are any ratings, fill in the empty ratings with -1
         if ratings:
             for cat in categoryNames:
-                if ratings[categoryNames[cat]] is None:
+                if not categoryNames[cat] in ratings:
                     ratings[categoryNames[cat]] = [-1,-1]
         self.ratings = ratings
 
@@ -124,7 +124,6 @@ class MywotEntry():
 
         if not urlID is None:
             # comments
-            print 'Entering comments into database'
             sql = """INSERT INTO comments(comment_date, author, 
                      text, description, karma, votesEnabled, upvotes, 
                      downvotes, url_id)
@@ -196,16 +195,18 @@ class MywotEntry():
         self.getOfficialRatings()
         if self.ratings:
             # Request the html page
-            req = urllib2.Request('http://www.mywot.com/en/scorecard/' + self.url, None, HEADERS)
-            self.body = BeautifulSoup(urllib2.urlopen(req).read()).body
+            try:
+                req = urllib2.Request('http://www.mywot.com/en/scorecard/' + self.url, None, HEADERS)
+                self.body = BeautifulSoup(urllib2.urlopen(req).read()).body
 
-            # Extract information
-            self.savePageToFile()
-            self.getCommentStatistics()
-            self.getComments()
-            self.getThirdPartyInfo()
-            self.saveToDatabase()
-            
+                # Extract information
+                self.savePageToFile()
+                self.getCommentStatistics()
+                self.getComments()
+                self.getThirdPartyInfo()
+                self.saveToDatabase()
+            except Exception, e:
+                print e
         else:
             print 'Not in WOT Database (' + self.url + ')'
             self.saveToDatabase()

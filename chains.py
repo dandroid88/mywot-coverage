@@ -114,8 +114,7 @@ def runBatch(file_name, startingPoint, howMany):
                                  'time_2' : url.split(' ')[4]}
                     chainID = createNewChain(url.split(' ')[0])
                     if chainID:
-                        for url in history:
-                            print url
+                        for url in history[1:]:
                             entry = MywotEntry(url.split(' ')[0].strip('\n\r'), FOLDER, extraInfo, chainID).getAllInfo()
                         print '\n'
             iteration += 1              
