@@ -1,13 +1,13 @@
 #!/bin/bash
 
 DATE=$(date +"%T")
-URLFILE="top_10000.txt"
+URLFILE="datasets/top_10000.txt"
 INCREMENT=100
 ITERATIONS=1
 START=0
 
 
-RESULTS="Logs/results-$DATE.txt"
+RESULTS="Logs/results-Alexa-$DATE.txt"
 let END=$INCREMENT*$ITERATIONS+$START
 let ADJUSTEDITER=$ITERATIONS-1
 echo "Running Campaign in increments of $INCREMENT" | tee -a $RESULTS

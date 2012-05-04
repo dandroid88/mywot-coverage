@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 from webkit_browser.webkit_browser import Browser
 from pyvirtualdisplay import Display
 
+COMMENT_PAGE_LIMIT = 10
 HEADERS = { 'User-Agent' : 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.142 Safari/535.19', \
             'Connection' : 'keep-alive\r\n', \
             'Cache-Control' : 'max-age=0\r\n', \
@@ -31,7 +32,9 @@ class MywotEntry():
         if ratings:
             for cat in categoryNames:
                 if not categoryNames[cat] in ratings:
-                    ratings[categoryNames[cat]] = [-1,-1]
+                    ratings[categoryNames[cat]] = ['-1', '-1']
+#            for rat in ratings:
+#                print ratings[rat]
         self.ratings = ratings
 
     def printOfficialRatings(self):
@@ -152,7 +155,8 @@ class MywotEntry():
         lastPage = 1
         paging = self.body.findAll('div', { 'class' : 'paging'})
         if paging:
-            lastPage =  int(paging[0].findAll('li', { 'class' : 'btn' })[-1]['page'])
+            lastPage = int(paging[0].findAll('li', { 'class' : 'btn' })[-1]['page'])
+            lastPage = min(COMMENT_PAGE_LIMIT, lastPage)
         comments = []
 
         # Get a list of URLs to fetch
@@ -196,6 +200,7 @@ class MywotEntry():
     def getAllInfo(self):
         self.getOfficialRatings()
         if self.ratings:
+#            print self.url
             # Request the html page
             try:
                 req = urllib2.Request('http://www.mywot.com/en/scorecard/' + self.url, None, HEADERS)

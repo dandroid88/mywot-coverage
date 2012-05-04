@@ -1,13 +1,13 @@
 #!/bin/bash
 
 DATE=$(date +"%T")
-URLFILE="URLs.txt"
-INCREMENT=100
+URLFILE="datasets/URLs.txt"
+INCREMENT=5
 ITERATIONS=1
 START=0
 
 
-RESULTS="Logs/results-$DATE.txt"
+RESULTS="Logs/results-Chains-$DATE.txt"
 let END=$INCREMENT*$ITERATIONS+$START
 let ADJUSTEDITER=$ITERATIONS-1
 echo "Running Campaign in increments of $INCREMENT" | tee -a $RESULTS
@@ -16,7 +16,7 @@ echo "" | tee -a $RESULTS
 for BATCH in `seq 0 $ADJUSTEDITER`; do
     let LOCALSTART=$INCREMENT*$BATCH+$START
     echo "Currently running batch starting at $LOCALSTART" | tee -a $RESULTS
-    ./chain.py -batch $URLFILE $LOCALSTART $INCREMENT 2>&- | tee -a $RESULTS
+    ./chains.py -batch $URLFILE $LOCALSTART $INCREMENT 2>&- | tee -a $RESULTS
     echo "" | tee -a $RESULTS
 done
 

@@ -13,7 +13,7 @@ HEADERS = { 'User-Agent' : 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/535.19 (
             'Accept' : 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\n'}
 
 FOLDER = '/Site Samples/' + str(datetime.datetime.now()).replace(' ', '_')
-TIMEOUT = 15
+TIMEOUT = 10
 
 def tooLong(signum, frame):
     raise Exception("TIMED OUT")
