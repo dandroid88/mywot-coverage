@@ -4,13 +4,8 @@ import sys, urllib2, re, os, MySQLdb, time, requests, signal, datetime
 from xml.dom.minidom import parseString
 from bs4 import BeautifulSoup
 from pyvirtualdisplay import Display
-from mywot.checkWOT import MywotEntry
-
-#from webkit_browser.webkit_browser import Browser
+from mywot.mywot import MywotEntry
 from webkit_browser.webkit_browser_mod import Browser
-
-
-#http://blog.cartercole.com/2010/08/new-seo-api-http-redirect-chain-test.html
 
 HEADERS = { 'User-Agent' : 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.142 Safari/535.19', \
             'Connection' : 'keep-alive\r\n', \
@@ -19,7 +14,6 @@ HEADERS = { 'User-Agent' : 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/535.19 (
 
 FOLDER = '/Site Samples/' + str(datetime.datetime.now()).replace(' ', '_')
 TIMEOUT = 15
-
 
 def tooLong(signum, frame):
     raise Exception("TIMED OUT")
@@ -122,10 +116,7 @@ def runBatch(file_name, startingPoint, howMany):
                     if chainID:
                         for url in history:
                             print url
-                            #try:
                             entry = MywotEntry(url.split(' ')[0].strip('\n\r'), FOLDER, extraInfo, chainID).getAllInfo()
-                            #except:
-                        #        pass
                         print '\n'
             iteration += 1              
     finally:

@@ -6,7 +6,7 @@ from xml.dom.minidom import parseString
 from bs4 import BeautifulSoup
 from webkit_browser.webkit_browser import Browser
 from pyvirtualdisplay import Display
-from mywot.checkWOT import MywotEntry
+from mywot.mywot import MywotEntry
 
 FOLDER = '/Site Samples/' + str(datetime.datetime.now()).replace(' ', '_')
 
