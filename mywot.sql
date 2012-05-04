@@ -1,9 +1,8 @@
--- Drop all of the tables
--- drop table chains, urls, comments;
-
 -- Load this file
 -- source checkWot.sql
 
+-- Drop all of the tables
+DROP TABLE chains, urls, comments;
 
 CREATE TABLE IF NOT EXISTS chains
 (

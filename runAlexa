@@ -4,7 +4,7 @@ DATE=$(date +"%T")
 URLFILE="top_10000.txt"
 INCREMENT=100
 ITERATIONS=1
-START=9164
+START=0
 
 
 RESULTS="Logs/results-$DATE.txt"
@@ -16,7 +16,7 @@ echo "" | tee -a $RESULTS
 for BATCH in `seq 0 $ADJUSTEDITER`; do
     let LOCALSTART=$INCREMENT*$BATCH+$START
     echo "Currently running batch starting at $LOCALSTART" | tee -a $RESULTS
-    ./checkWOT.py -batch $URLFILE $LOCALSTART $INCREMENT 2>&- | tee -a $RESULTS
+    ./batch.py -batch $URLFILE $LOCALSTART $INCREMENT 2>&- | tee -a $RESULTS
     echo "" | tee -a $RESULTS
 done
 

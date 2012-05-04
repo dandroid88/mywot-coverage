@@ -169,23 +169,25 @@ class MywotEntry():
 
             # Parse rendered pages
             commentsSection = BeautifulSoup(html).find('div', { 'class' : 'sc-comment-row' })
-            for c in commentsSection.findAll('div', { 'class' : 'sc-comment' }):
-                comment = {}
-                date = c.find('em', { 'class' : 'date' }).text.split('/')
-                comment['date'] = datetime.date(int(date[2]), int(date[0]), int(date[1]))
-                comment['author'] = c.find('strong', { 'class' : 'author' }).text
-                comment['text'] = c.find('p', {'class' : 'sc-full-text'}).text.strip(' \n\r\t')
-                comment['description'] = c.find('p', {'class' : 'note'}).text
-                comment['karma'] = c.find('p', {'class' : 'note'})['class'][1]
-                if hasattr(c.find('li', {'class' : 'icon-like'}), 'contents'):
-                    comment['votesEnabled'] = True
-                    comment['upVotes'] = c.find('li', {'class' : 'icon-like'}).contents[0].text
-                    comment['downVotes'] = c.find('li', {'class' : 'icon-unlike'}).contents[0].text
-                else:
-                    comment['votesEnabled'] = False
-                    comment['upVotes'] = '0'
-                    comment['downVotes'] = '0'
-                comments.append(comment)
+            allComments = commentsSection.findAll('div', { 'class' : 'sc-comment' })
+            if allComments:
+                for c in allComments:
+                    comment = {}
+                    date = c.find('em', { 'class' : 'date' }).text.split('/')
+                    comment['date'] = datetime.date(int(date[2]), int(date[0]), int(date[1]))
+                    comment['author'] = c.find('strong', { 'class' : 'author' }).text
+                    comment['text'] = c.find('p', {'class' : 'sc-full-text'}).text.strip(' \n\r\t')
+                    comment['description'] = c.find('p', {'class' : 'note'}).text
+                    comment['karma'] = c.find('p', {'class' : 'note'})['class'][1]
+                    if hasattr(c.find('li', {'class' : 'icon-like'}), 'contents'):
+                        comment['votesEnabled'] = True
+                        comment['upVotes'] = c.find('li', {'class' : 'icon-like'}).contents[0].text
+                        comment['downVotes'] = c.find('li', {'class' : 'icon-unlike'}).contents[0].text
+                    else:
+                        comment['votesEnabled'] = False
+                        comment['upVotes'] = '0'
+                        comment['downVotes'] = '0'
+                    comments.append(comment)
         del b
         display.stop()
         self.comments = comments
