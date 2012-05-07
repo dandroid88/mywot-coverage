@@ -1,6 +1,14 @@
 https://github.com/emyller/webkitcrawler
 sudo apt-get install python-qt4
 sudo easy_install request
+sudo apt-get install python-mysqldb
+sudo apt-get install mysql-server
+sudo easy_install requests
+sudo easy_install beautifulsoup4
+sudo easy_install pyvirtualdisplay
+sudo apt-get install xvfb
+
+
 Need some other packages, install as needed...
 
 Read in the sql file to MySQL after logging in:
