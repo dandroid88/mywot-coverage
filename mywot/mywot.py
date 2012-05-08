@@ -15,11 +15,12 @@ HEADERS = { 'User-Agent' : 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/535.19 (
 
 
 class MywotEntry():
-    def __init__(self, url, folder, extraInfo = {'spam_nonspam' : False, 'occurances' : False, 'time_1' : 0, 'time_2' : 0}, chainID = 1):
+    def __init__(self, url, folder, extraInfo = {'spam_nonspam' : False, 'occurances' : False, 'time_1' : 0, 'time_2' : 0}, chainID = 1, getComments = True):
         self.url = url
         self.folder = folder
         self.chainID = chainID
         self.extraInfo = extraInfo
+        self.getComments = getComments
 
     def getOfficialRatings(self):
         apiURL = 'http://api.mywot.com/0.4/public_query2?target=' + self.url.replace('http://', '').split('/')[0]
@@ -125,7 +126,7 @@ class MywotEntry():
             db.rollback()
             print "\nInserting URL info Failed\n"
 
-        if not urlID is None:
+        if not urlID is None and self.getComments:
             # comments
             sql = """INSERT INTO comments(comment_date, author, 
                      text, description, karma, votesEnabled, upvotes, 
@@ -144,7 +145,7 @@ class MywotEntry():
                     db.rollback()
                     print "\nInserting Comment Failed\n"
 
-            db.close()
+        db.close()
 
     def getThirdPartyInfo(self):
         notDone = True        
@@ -209,7 +210,8 @@ class MywotEntry():
                 # Extract information
                 self.savePageToFile()
                 self.getCommentStatistics()
-                self.getComments()
+                if self.getCommants:
+                    self.getComments()
                 self.getThirdPartyInfo()
                 self.saveToDatabase()
             except Exception, e:

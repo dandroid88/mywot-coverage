@@ -15,4 +15,13 @@ Read in the sql file to MySQL after logging in:
 use mywot;
 source checkWot.sql;
 
+ssh remote_machine
+apt-get install screen
+screen
+run your_script
 
+To detach from screen session:
+screen -d
+
+To re-attach screen session:
+screen -r

@@ -88,7 +88,7 @@ def createNewChain(url):
     db.close()
     return newID
 
-def runBatch(file_name, startingPoint, howMany):
+def runBatch(file_name, startingPoint, howMany, getComments):
     totalNumComments = 0
     urlCount = 0
     startTime = datetime.datetime.now()
@@ -115,7 +115,7 @@ def runBatch(file_name, startingPoint, howMany):
                     chainID = createNewChain(url.split(' ')[0])
                     if chainID:
                         for url in history[1:]:
-                            entry = MywotEntry(url.split(' ')[0].strip('\n\r'), FOLDER, extraInfo, chainID).getAllInfo()
+                            entry = MywotEntry(url.split(' ')[0].strip('\n\r'), FOLDER, extraInfo, chainID, getComments).getAllInfo()
                         print '\n'
             iteration += 1              
     finally:
@@ -132,8 +132,11 @@ def runBatch(file_name, startingPoint, howMany):
 
 if (len(sys.argv) > 1):
     os.mkdir(os.getcwd() + FOLDER)
+    getComments = True
+    if '-skipcomments' in sys.argv:
+        getComments = False
     if '-batch' in sys.argv:
-        runBatch(sys.argv[2], int(sys.argv[3]), int(sys.argv[4]))
+        runBatch(sys.argv[2], int(sys.argv[3]), int(sys.argv[4]), getComments)
     else:
         url = sys.argv[1]
         if not re.match('(?=http)\w+', url):
