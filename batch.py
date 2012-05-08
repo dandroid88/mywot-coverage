@@ -29,7 +29,8 @@ def runBatch(file_name, startingPoint, howMany, getComments):
     runtime = datetime.datetime.now() - startTime
     print '\n-----------------------------------'
     print 'Total number of URLs:\t\t', urlCount
-    print 'Total Number of Comments:\t', totalNumComments
+    if getComments:
+        print 'Total Number of Comments:\t', totalNumComments
     print 'Average Number of Comments:\t', totalNumComments / urlCount
     print 'Average Runtime per URL:\t', runtime / urlCount
     print 'Total Runtime:\t\t\t', runtime

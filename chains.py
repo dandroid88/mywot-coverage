@@ -16,7 +16,7 @@ FOLDER = '/Site Samples/' + str(datetime.datetime.now()).replace(' ', '_')
 TIMEOUT = 10
 
 def tooLong(signum, frame):
-    raise Exception("TIMED OUT")
+    raise Exception("TIMED OUT\n")
 
 signal.signal(signal.SIGALRM, tooLong)
 
@@ -28,7 +28,7 @@ def followChain(url):
         signal.alarm(0)
         return combineChains(webkitChain, requestChain)
     except Exception, exc:
-        print url + ' ' + str(exc)
+        sys.stderr.write(url + ' ' + str(exc))
         return False
 
 def combineChains(webkitChain, requestChain):
@@ -89,7 +89,6 @@ def createNewChain(url):
     return newID
 
 def runBatch(file_name, startingPoint, howMany, getComments):
-    totalNumComments = 0
     urlCount = 0
     startTime = datetime.datetime.now()
     endPoint = startingPoint + howMany
@@ -116,7 +115,6 @@ def runBatch(file_name, startingPoint, howMany, getComments):
                     if chainID:
                         for url in history[1:]:
                             entry = MywotEntry(url.split(' ')[0].strip('\n\r'), FOLDER, extraInfo, chainID, getComments).getAllInfo()
-                        print '\n'
             iteration += 1              
     finally:
         display.stop()

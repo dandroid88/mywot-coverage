@@ -2,8 +2,8 @@
 
 DATE=$(date +"%T")
 URLFILE="datasets/URLs.txt"
-INCREMENT=5
-ITERATIONS=1
+INCREMENT=10
+ITERATIONS=3
 START=0
 
 
@@ -17,7 +17,8 @@ echo "" | tee -a $RESULTS
 for BATCH in `seq 0 $ADJUSTEDITER`; do
     let LOCALSTART=$INCREMENT*$BATCH+$START
     echo "Currently running batch starting at $LOCALSTART" | tee -a $RESULTS
-    ./chains.py -batch $URLFILE $LOCALSTART $INCREMENT 2>$ERROR | tee -a $RESULTS
+#    ./chains.py -batch $URLFILE $LOCALSTART $INCREMENT 2>$ERROR | tee -a $RESULTS
+    ./chains.py -batch $URLFILE $LOCALSTART $INCREMENT -skipcomments 2>$ERROR | tee -a $RESULTS
     echo "" | tee -a $RESULTS
 done
 

@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 from webkit_browser.webkit_browser import Browser
 from pyvirtualdisplay import Display
 
-COMMENT_PAGE_LIMIT = 10
+COMMENT_PAGE_LIMIT = 1000
 HEADERS = { 'User-Agent' : 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.142 Safari/535.19', \
             'Connection' : 'keep-alive\r\n', \
             'Cache-Control' : 'max-age=0\r\n', \
@@ -20,7 +20,8 @@ class MywotEntry():
         self.folder = folder
         self.chainID = chainID
         self.extraInfo = extraInfo
-        self.getComments = getComments
+        self.shouldGetComments = getComments
+        self.comments = []
 
     def getOfficialRatings(self):
         apiURL = 'http://api.mywot.com/0.4/public_query2?target=' + self.url.replace('http://', '').split('/')[0]
@@ -29,13 +30,11 @@ class MywotEntry():
         ratings = {}
         for application in dom.getElementsByTagName('application'):
             ratings[categoryNames[application.getAttribute('name')]] = [application.getAttribute('r'), application.getAttribute('c')]
-        # if there are any ratings, fill in the empty ratings with -1
+        # if there are any ratings, fill in the empty ratings with None
         if ratings:
             for cat in categoryNames:
                 if not categoryNames[cat] in ratings:
-                    ratings[categoryNames[cat]] = ['-1', '-1']
-#            for rat in ratings:
-#                print ratings[rat]
+                    ratings[categoryNames[cat]] = [None, None]
         self.ratings = ratings
 
     def printOfficialRatings(self):
@@ -78,35 +77,56 @@ class MywotEntry():
         f.write(str(self.body))
         f.close()
 
-    def saveToDatabase(self):
-        db = MySQLdb.connect(host="localhost", user="dan", passwd="", db="mywot")
-        cursor = db.cursor()
-
-        extra = self.extraInfo
-        url = self.url
-        Trustworthiness = self.ratings['Trustworthiness'][1]
-        Trust_confidence = self.ratings['Trustworthiness'][0]
-        Vendor_Reliability = self.ratings['Vendor reliability'][1]
-        Vendor_confidence = self.ratings['Vendor reliability'][0]
-        Privacy = self.ratings['Privacy'][1]
-        Privacy_confidence = self.ratings['Privacy'][0] 
-        Child_safety = self.ratings['Child safety'][1]
-        Child_confidence = self.ratings['Child safety'][0] 
-        stats = self.commentStats
-
-        urlID = None
-        sql = """INSERT INTO urls(url, Trustworthiness, Trust_confidence, Vendor_Reliability, 
-                 Vendor_confidence, Privacy, Privacy_confidence,
-	     		 Child_safety, Child_confidence, spam_nonspam, occurances, time_1, time_2, 
-                 good_site, useful_informative, entertaining, good_cus_exper,
-                 child_friendly, spam, annoying_ads, bad_exper, phishing, 
-                 malicious_viruses, bro_exploit, spyware, adult_content, 
-                 hateful, eth_issues, useless, other, chain_id)
-	     		 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                         %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                         %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
-
+    def saveEmptyToDatabase(self):
         try:
+            db = MySQLdb.connect(host="localhost", user="dan", passwd="", db="mywot")
+            cursor = db.cursor()
+            
+            extra = self.extraInfo
+
+            sql = """INSERT INTO urls(url, spam_nonspam, occurances, time_1, time_2, chain_id) 
+                   VALUES (%s, %s, %s, %s, %s, %s)"""
+
+            #print 'Entering URL info into database'
+            cursor.execute(sql.replace('\n', ''), (self.url, extra['spam_nonspam'], 
+                                 extra['occurances'], extra['time_1'], extra['time_2'], self.chainID))
+            db.commit()
+        except MySQLdb.Error, e:
+            print "%s" %e
+            db.rollback()
+            print 'Save empty to database FAILED'
+        db.close()
+
+
+    def saveToDatabase(self):
+        try:
+            db = MySQLdb.connect(host="localhost", user="dan", passwd="", db="mywot")
+            cursor = db.cursor()
+
+            extra = self.extraInfo
+            url = self.url
+            Trustworthiness = self.ratings['Trustworthiness'][1]
+            Trust_confidence = self.ratings['Trustworthiness'][0]
+            Vendor_Reliability = self.ratings['Vendor reliability'][1]
+            Vendor_confidence = self.ratings['Vendor reliability'][0]
+            Privacy = self.ratings['Privacy'][1]
+            Privacy_confidence = self.ratings['Privacy'][0] 
+            Child_safety = self.ratings['Child safety'][1]
+            Child_confidence = self.ratings['Child safety'][0] 
+            stats = self.commentStats
+
+            urlID = None
+            sql = """INSERT INTO urls(url, Trustworthiness, Trust_confidence, Vendor_Reliability, 
+                     Vendor_confidence, Privacy, Privacy_confidence,
+	         		 Child_safety, Child_confidence, spam_nonspam, occurances, time_1, time_2, 
+                     good_site, useful_informative, entertaining, good_cus_exper,
+                     child_friendly, spam, annoying_ads, bad_exper, phishing, 
+                     malicious_viruses, bro_exploit, spyware, adult_content, 
+                     hateful, eth_issues, useless, other, chain_id)
+	         		 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                             %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                             %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+
             #print 'Entering URL info into database'
             cursor.execute(sql.replace('\n', ''), (url, Trustworthiness, Trust_confidence, 
                                  Vendor_Reliability, Vendor_confidence, Privacy, Privacy_confidence, 
@@ -126,7 +146,7 @@ class MywotEntry():
             db.rollback()
             print "\nInserting URL info Failed\n"
 
-        if not urlID is None and self.getComments:
+        if not urlID is None and self.shouldGetComments:
             # comments
             sql = """INSERT INTO comments(comment_date, author, 
                      text, description, karma, votesEnabled, upvotes, 
@@ -210,7 +230,7 @@ class MywotEntry():
                 # Extract information
                 self.savePageToFile()
                 self.getCommentStatistics()
-                if self.getCommants:
+                if self.shouldGetComments:
                     self.getComments()
                 self.getThirdPartyInfo()
                 self.saveToDatabase()
@@ -218,5 +238,5 @@ class MywotEntry():
                 print e
         else:
             print 'Not in WOT Database (' + self.url + ')'
-            self.saveToDatabase()
+            self.saveEmptyToDatabase()
         return self
