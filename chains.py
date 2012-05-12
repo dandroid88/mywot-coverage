@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 from pyvirtualdisplay import Display
 from mywot.mywot import MywotEntry
 from webkit_browser.webkit_browser_mod import Browser
+from guppy import hpy
 
 HEADERS = { 'User-Agent' : 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.142 Safari/535.19', \
             'Connection' : 'keep-alive\r\n', \
@@ -16,6 +17,8 @@ FOLDER = '/Site Samples/' + str(datetime.datetime.now()).replace(' ', '_')
 TIMEOUT = 10
 
 def tooLong(signum, frame):
+    h = hpy()
+    print h.heap()
     raise Exception("TIMED OUT\n")
 
 signal.signal(signal.SIGALRM, tooLong)
@@ -102,6 +105,7 @@ def runBatch(file_name, startingPoint, howMany, getComments):
         for url in f:
             if iteration >= startingPoint and iteration < endPoint:
                 iterStartTime = datetime.datetime.now()
+                print str(iteration) + ': ' + url.split(' ')[0]
                 history = followChain(url.split(' ')[0])
                 urlCount += 1
                 if history and len(history) > 1:
@@ -127,6 +131,7 @@ def runBatch(file_name, startingPoint, howMany, getComments):
         print 'Average Runtime per URL:\t', runtime / urlCount
         print 'Total Runtime:\t\t\t', runtime
         print '\n\n'
+        sys.exit(0)
 
 if (len(sys.argv) > 1):
     os.mkdir(os.getcwd() + FOLDER)

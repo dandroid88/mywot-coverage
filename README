@@ -7,7 +7,7 @@ sudo easy_install requests
 sudo easy_install beautifulsoup4
 sudo easy_install pyvirtualdisplay
 sudo apt-get install xvfb
-
+sudo apt-get install python-guppy
 
 Need some other packages, install as needed...
 
