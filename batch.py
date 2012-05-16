@@ -10,7 +10,7 @@ from mywot.mywot import MywotEntry
 
 FOLDER = '/Site Samples/' + str(datetime.datetime.now()).replace(' ', '_')
 
-def runBatch(file_name, startingPoint, howMany, getComments):
+def runBatch(file_name, startingPoint, howMany, getComments, hasPopularity):
     totalNumComments = 0
     urlCount = 0
     startTime = datetime.datetime.now()
@@ -20,7 +20,11 @@ def runBatch(file_name, startingPoint, howMany, getComments):
     for url in f:
         if iteration >= startingPoint and iteration < endPoint:
             iterStartTime = datetime.datetime.now()
-            entry = MywotEntry(url.split(' ')[0].strip('\n\r'), FOLDER, getComments=getComments).getAllInfo()
+            popularity = 0
+            if hasPopularity:
+                popularity = int(url.split()[1].strip('\n\r'))
+                print popularity
+            entry = MywotEntry(url.split()[0].strip('\n\r'), FOLDER, getComments=getComments, popularity=popularity).getAllInfo()
             urlCount += 1
             if entry.ratings:
                 totalNumComments += len(entry.comments)
@@ -38,10 +42,13 @@ def runBatch(file_name, startingPoint, howMany, getComments):
 if (len(sys.argv) > 1):
     os.mkdir(os.getcwd() + FOLDER)
     getComments = True
+    hasPopularity = False
+    if '-hasPop' in sys.argv:
+        hasPopularity = True
     if '-skipcomments' in sys.argv:
         getComments = False
     if '-batch' in sys.argv[1]:
-        runBatch(sys.argv[2], int(sys.argv[3]), int(sys.argv[4]), getComments)
+        runBatch(sys.argv[2], int(sys.argv[3]), int(sys.argv[4]), getComments, hasPopularity)
     else:
         url = sys.argv[1]
         if not re.match('(?=http)\w+', url):

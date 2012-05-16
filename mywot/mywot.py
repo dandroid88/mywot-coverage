@@ -15,13 +15,14 @@ HEADERS = { 'User-Agent' : 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/535.19 (
 
 
 class MywotEntry():
-    def __init__(self, url, folder, extraInfo = {'spam_nonspam' : False, 'occurances' : False, 'time_1' : 0, 'time_2' : 0}, chainID = 1, getComments = True):
+    def __init__(self, url, folder, extraInfo = {'spam_nonspam' : False, 'occurances' : False, 'time_1' : 0, 'time_2' : 0}, chainID = 1, getComments = True, popularity = 0):
         self.url = url
         self.folder = folder
         self.chainID = chainID
         self.extraInfo = extraInfo
         self.shouldGetComments = getComments
         self.comments = []
+        self.popularity = popularity
 
     def getOfficialRatings(self):
         apiURL = 'http://api.mywot.com/0.4/public_query2?target=' + self.url.replace('http://', '').split('/')[0]
@@ -84,12 +85,13 @@ class MywotEntry():
             
             extra = self.extraInfo
 
-            sql = """INSERT INTO urls(url, spam_nonspam, occurances, time_1, time_2, chain_id) 
-                   VALUES (%s, %s, %s, %s, %s, %s)"""
+            sql = """INSERT INTO urls(url, spam_nonspam, occurances, time_1, time_2, popularity, chain_id) 
+                   VALUES (%s, %s, %s, %s, %s, %s, %s)"""
 
             #print 'Entering URL info into database'
             cursor.execute(sql.replace('\n', ''), (self.url, extra['spam_nonspam'], 
-                                 extra['occurances'], extra['time_1'], extra['time_2'], self.chainID))
+                                 extra['occurances'], extra['time_1'], extra['time_2'], 
+                                 self.popularity, self.chainID))
             db.commit()
         except MySQLdb.Error, e:
             print "%s" %e
@@ -119,19 +121,19 @@ class MywotEntry():
             sql = """INSERT INTO urls(url, Trustworthiness, Trust_confidence, Vendor_Reliability, 
                      Vendor_confidence, Privacy, Privacy_confidence,
 	         		 Child_safety, Child_confidence, spam_nonspam, occurances, time_1, time_2, 
-                     good_site, useful_informative, entertaining, good_cus_exper,
+                     popularity, good_site, useful_informative, entertaining, good_cus_exper,
                      child_friendly, spam, annoying_ads, bad_exper, phishing, 
                      malicious_viruses, bro_exploit, spyware, adult_content, 
                      hateful, eth_issues, useless, other, chain_id)
 	         		 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                              %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                             %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+                             %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
 
             #print 'Entering URL info into database'
             cursor.execute(sql.replace('\n', ''), (url, Trustworthiness, Trust_confidence, 
                                  Vendor_Reliability, Vendor_confidence, Privacy, Privacy_confidence, 
                                  Child_safety, Child_confidence, extra['spam_nonspam'], 
-                                 extra['occurances'], extra['time_1'], extra['time_2'], 
+                                 extra['occurances'], extra['time_1'], extra['time_2'], self.popularity,
                                  stats['Good site'], stats['Useful, informative'], stats['Entertaining'],
                                  stats['Good customer experience'], stats['Child friendly'], stats['Spam'], 
                                  stats['Annoying ads or popups'], stats['Bad cusotmer experience'], 

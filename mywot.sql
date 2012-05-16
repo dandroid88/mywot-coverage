@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS urls
     occurances INT,    
     time_1 INT,
     time_2 INT,
+    popularity INT,
 
     good_site INT, 
     useful_informative INT, 
