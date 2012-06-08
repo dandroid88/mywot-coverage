@@ -8,13 +8,14 @@ from mywot.mywot import MywotEntry
 from webkit_browser.webkit_browser_mod import Browser
 from guppy import hpy
 
+DATABASE = 'mywot'
 HEADERS = { 'User-Agent' : 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.142 Safari/535.19', \
             'Connection' : 'keep-alive\r\n', \
             'Cache-Control' : 'max-age=0\r\n', \
             'Accept' : 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\n'}
 
 FOLDER = '/Site Samples/' + str(datetime.datetime.now()).replace(' ', '_')
-TIMEOUT = 10
+TIMEOUT = 20
 
 def tooLong(signum, frame):
     h = hpy()
@@ -65,7 +66,7 @@ def followChainWebkit(url):
         return history
 
 def createNewChain(url):
-    db = MySQLdb.connect(host="localhost", user="dan", passwd="", db="mywot")
+    db = MySQLdb.connect(host="localhost", user="dan", passwd="", db=DATABASE)
     cursor = db.cursor()
     newID = False
     
@@ -103,23 +104,29 @@ def runBatch(file_name, startingPoint, howMany, getComments):
     display = Display(visible=None).start()
     try:
         for url in f:
-            if iteration >= startingPoint and iteration < endPoint:
-                iterStartTime = datetime.datetime.now()
-                print str(iteration) + ': ' + url.split(' ')[0]
-                history = followChain(url.split(' ')[0])
-                urlCount += 1
-                if history and len(history) > 1:
-                    chainCount += 1
-                    linkLengths.append(len(history))
-                    extraInfo = {'spam_nonspam' : 0 if 'nonspam' in url.split(' ')[1] else 1,
-                                 'occurances' : url.split(' ')[2],
-                                 'time_1' : url.split(' ')[3],
-                                 'time_2' : url.split(' ')[4]}
-                    chainID = createNewChain(url.split(' ')[0])
-                    if chainID:
-                        for url in history[1:]:
-                            entry = MywotEntry(url.split(' ')[0].strip('\n\r'), FOLDER, extraInfo, chainID, getComments).getAllInfo()
-            iteration += 1              
+            signal.alarm(TIMEOUT)
+            iteration += 1
+            try:
+                if iteration >= startingPoint and iteration < endPoint:
+                    iterStartTime = datetime.datetime.now()
+                    print str(iteration) + ': ' + url.split(' ')[0].strip('\n\r')
+                    history = followChain(url.split(' ')[0])
+                    urlCount += 1
+                    if history and len(history) > 1:
+                        chainCount += 1
+                        linkLengths.append(len(history))
+                        extraInfo = {'spam_nonspam' : 0 if 'nonspam' in url.split(' ')[1] else 1,
+                                     'occurances' : url.split(' ')[2],
+                                     'time_1' : url.split(' ')[3],
+                                     'time_2' : url.split(' ')[4]}
+                        chainID = createNewChain(url.split(' ')[0])
+                        if chainID:
+                            for url in history:
+                                print '\t' + url.split(' ')[0].strip('\n\r')
+                                entry = MywotEntry(url.split(' ')[0].strip('\n\r').replace('http://bitly.com/a/warning?url=', ''), FOLDER, extraInfo=extraInfo, chainID=chainID, getComments=getComments).getAllInfo()
+            except Exception, exc:
+                sys.stderr.write(url + ' ' + str(exc))
+            
     finally:
         display.stop()
         runtime = datetime.datetime.now() - startTime
@@ -131,7 +138,7 @@ def runBatch(file_name, startingPoint, howMany, getComments):
         print 'Average Runtime per URL:\t', runtime / urlCount
         print 'Total Runtime:\t\t\t', runtime
         print '\n\n'
-        sys.exit(0)
+        os._exit(1)
 
 if (len(sys.argv) > 1):
     os.mkdir(os.getcwd() + FOLDER)
@@ -147,4 +154,4 @@ if (len(sys.argv) > 1):
         else:
             followChain(sys.argv[1].strip('\n\r'))
 else:
-    print 'Usage: chains.py http://www.some_url.com    OR     ./chains.py -batch listOfURLs.txt 0 10'
+    print 'Usage: chains.py http://www.some_url.com    OR     ./chains.py -batch listOfURLs.txt 0 10 [-skipComments]'

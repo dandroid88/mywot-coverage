@@ -1,4 +1,7 @@
-https://github.com/emyller/webkitcrawler
+Tested on:
+Linux Mint 12/13, python 2.7, BeautifulSoup 4
+
+How to install:
 sudo apt-get install python-qt4
 sudo easy_install request
 sudo apt-get install python-mysqldb
@@ -7,21 +10,30 @@ sudo easy_install requests
 sudo easy_install beautifulsoup4
 sudo easy_install pyvirtualdisplay
 sudo apt-get install xvfb
-sudo apt-get install python-guppy
+depending on you configuration you may need some additional packages
 
-Need some other packages, install as needed...
+Setup:
+Create a ‘Site Samples Directory’ at the same level as the chains.py file.
+Install mysql, modify the createDB.sql file as desired and source it in the mysql prompt.
+At the mysql prompt, source the mywot.sql file.
+Make sure to modify batch.py, chains.py and mywot/mywot.py according to how you modified 
 
-Read in the sql file to MySQL after logging in:
-use mywot;
-source checkWot.sql;
+How to run:
+“-batch” tells the script to run batch mode
+“-skipcomments” tells the script to not collect comments from MYWOT
 
-ssh remote_machine
-apt-get install screen
-screen
-run your_script
+The chains.py takes files in the following format (example):
+http://bit.ly/jU0kgr nonspam 1 1309265860 1309265860
 
-To detach from screen session:
-screen -d
+./chains.py -batch datasets/URLs_spam.txt 0 10000 -skipcomments | tee -a spamRun.txt
+Would follow chains starting at the first URL in URLs_spam.txt up until URL 10000 without scraping comments.
 
-To re-attach screen session:
-screen -r
+batch.py is essentially the same interface however it expects a file in one of the following formats:
+http://bit.ly/jU0kgr 
+http://bit.ly/jU0kgr 1234 
+where 1234 is the popularity of a given URL.
+
+If using popularity with batch.py you must provide the “-hasPop” flag.
+
+Located at:
+https://github.com/dmritard96/mywot-coverage

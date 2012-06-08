@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 from webkit_browser.webkit_browser import Browser
 from pyvirtualdisplay import Display
 
+DATABASE = 'mywot'
 COMMENT_PAGE_LIMIT = 1000
 HEADERS = { 'User-Agent' : 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.142 Safari/535.19', \
             'Connection' : 'keep-alive\r\n', \
@@ -80,7 +81,7 @@ class MywotEntry():
 
     def saveEmptyToDatabase(self):
         try:
-            db = MySQLdb.connect(host="localhost", user="dan", passwd="", db="mywot")
+            db = MySQLdb.connect(host="localhost", user="dan", passwd="", db=DATABASE)
             cursor = db.cursor()
             
             extra = self.extraInfo
@@ -102,19 +103,19 @@ class MywotEntry():
 
     def saveToDatabase(self):
         try:
-            db = MySQLdb.connect(host="localhost", user="dan", passwd="", db="mywot")
+            db = MySQLdb.connect(host="localhost", user="dan", passwd="", db=DATABASE)
             cursor = db.cursor()
 
             extra = self.extraInfo
             url = self.url
-            Trustworthiness = self.ratings['Trustworthiness'][1]
-            Trust_confidence = self.ratings['Trustworthiness'][0]
-            Vendor_Reliability = self.ratings['Vendor reliability'][1]
-            Vendor_confidence = self.ratings['Vendor reliability'][0]
-            Privacy = self.ratings['Privacy'][1]
-            Privacy_confidence = self.ratings['Privacy'][0] 
-            Child_safety = self.ratings['Child safety'][1]
-            Child_confidence = self.ratings['Child safety'][0] 
+            Trustworthiness = self.ratings['Trustworthiness'][0]
+            Trust_confidence = self.ratings['Trustworthiness'][1]
+            Vendor_Reliability = self.ratings['Vendor reliability'][0]
+            Vendor_confidence = self.ratings['Vendor reliability'][1]
+            Privacy = self.ratings['Privacy'][0]
+            Privacy_confidence = self.ratings['Privacy'][1] 
+            Child_safety = self.ratings['Child safety'][0]
+            Child_confidence = self.ratings['Child safety'][1] 
             stats = self.commentStats
 
             urlID = None
